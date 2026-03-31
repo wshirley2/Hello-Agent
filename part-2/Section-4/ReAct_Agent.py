@@ -1,7 +1,30 @@
+# ReAct 提示词模板
+# 动态上下文 ({question}/{history})：将用户的原始问题和不断累积的交互历史注入，让LLM基于完整的上下文进行决策。
+
+REACT_PROMPT_TEMPLATE = """
+请注意，你是一个有能力调用外部工具的智能助手。
+
+可用工具如下：
+{tool}
+
+请严格按照以下格式进行回应:
+
+Thought: 你的思考过程，用于分析问题、拆解任务和规划下一步行动。
+Action: 你决定采取的行动，必须是以下格式之一:
+
+- `{{tool_name}}[{{tool_input}}]`:调用一个可用工具。
+- `Finish[最终答案]`:当你认为已经获得最终答案时。
+- 当你收集到足够的信息，能够回答用户的最终问题时，你必须在Action:字段后使用 Finish[最终答案] 来输出最终答案。
+
+现在，请开始解决以下问题:
+Question: {question}
+History: {history}
+"""
+
 # ReActAgent 的核心是一个循环，它不断地“格式化提示词 -> 调用LLM -> 执行动作 -> 整合结果”，直到任务完成或达到最大步数限制。
 from LLM_Client import HelloAgentsLLM
 from Toolexecutor import ToolExecutor
-from ReActPrompt import REACT_PROMPT_TEMPLATE
+from Tool import search
 
 import re
 
@@ -30,7 +53,7 @@ class ReActAgent:
             # 把历史记录列表，转换成带换行的一段文字
             history_str = "\n".join(self.history)
             prompt = REACT_PROMPT_TEMPLATE.format(
-                tools = tools_desc,
+                tool = tools_desc,
                 question = question,
                 history = history_str
             )
@@ -77,6 +100,7 @@ class ReActAgent:
                 observation = tool_function(tool_input) # 调用真实工具
 
             print(f"👀 观察: {observation}")
+            
             # 将本轮的Action和Observation添加到历史记录中
             self.history.append(f"Action: {action}")
             self.history.append(f"Observation: {observation}")
@@ -106,3 +130,16 @@ class ReActAgent:
         if match:
             return match.group(1), match.group(2)
         return None, None
+
+    def _parse_action_input(self, action_text: str):
+        match = re.match(r"\w+\[(.*)\]", action_text, re.DOTALL)
+        return match.group(1) if match else ""
+
+if __name__ == '__main__':
+    llm = HelloAgentsLLM()
+    tool_executor = ToolExecutor()
+    search_desc = "一个网页搜索引擎。当你需要回答关于时事、事实以及在你的知识库中找不到的信息时，应使用此工具。"
+    tool_executor.registerTool("Search", search_desc, search)
+    agent = ReActAgent(llm_client=llm, tool_executor=tool_executor)
+    question = "华为最新的手机是哪一款？它的主要卖点是什么？"
+    agent.run(question)
