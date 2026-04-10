@@ -1,0 +1,4 @@
+agentscope==1.0.2
+pip install agentscope
+pip install dashscope
+pip install pydantic

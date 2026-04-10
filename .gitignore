@@ -1,8 +1,6 @@
 # Python 虚拟环境
 .venv/
 venv/
-# 环境密钥
-.env
 # 缓存
 __pycache__/
 *.pyc

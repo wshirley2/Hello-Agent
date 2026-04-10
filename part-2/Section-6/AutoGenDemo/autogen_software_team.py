@@ -180,7 +180,7 @@ async def run_software_development_team():
     print("🚀 启动 AutoGen 软件开发团队协作...")
     print("=" * 60)
 
-    # 使用 Console 来显示对话过程
+    # 使用 Console 来显示对话过程，异步执行团队协作，并流式输出对话过程
     result = await Console(team_chat.run_stream(task=task))
 
     print("\n" + "=" * 60)
@@ -205,3 +205,18 @@ if __name__ == "__main__":
         print(f"❌ 运行错误：{e}")
         import traceback
         traceback.print_exc()
+
+# model_client = OpenAIChatCompletionClient(
+#     model="deepseek-chat",
+#     api_key=os.getenv("DEEPSEEK_API_KEY"),
+#     base_url="https://api.deepseek.com/v1",
+#     model_info={
+#         "function_calling": True,
+#         "max_tokens": 4096,
+#         "context_length": 32768,
+#         "vision": False,
+#         "json_output": True,
+#         "family": "deepseek",
+#         "structured_output": True,
+#     }
+# )
